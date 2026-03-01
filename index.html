@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>HORIZON Leaderboard — Long-Horizon Agent Evaluation</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --white:#ffffff;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+  --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;
+  --gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827;
+  --blue-50:#eff6ff;--blue-100:#dbeafe;--blue-500:#3b82f6;--blue-600:#2563eb;
+  --green-50:#f0fdf4;--green-600:#16a34a;
+  --amber-50:#fffbeb;--amber-500:#f59e0b;
+  --red-50:#fef2f2;--red-500:#ef4444;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans',sans-serif;font-size:14px;color:var(--gray-800);background:var(--white);line-height:1.6;}
+
+/* BANNER */
+.top-banner{background:var(--gray-900);color:white;padding:9px 0;text-align:center;font-size:12px;letter-spacing:.02em;}
+.top-banner a{color:#93c5fd;text-decoration:none;}
+.top-banner a:hover{text-decoration:underline;}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--gray-200);}
+.nav-inner{max-width:1140px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--gray-900);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:white;}
+.logo-text{font-size:15px;font-weight:700;color:var(--gray-900);letter-spacing:-.01em;}
+.logo-sub{font-size:11px;color:var(--gray-400);margin-top:-2px;}
+.nav-links{display:flex;align-items:center;gap:6px;list-style:none;}
+.nav-links a{font-size:13px;font-weight:500;color:var(--gray-500);text-decoration:none;padding:6px 10px;border-radius:6px;transition:background .15s,color .15s;}
+.nav-links a:hover{background:var(--gray-100);color:var(--gray-800);}
+.nav-paper{background:var(--gray-900)!important;color:white!important;padding:6px 14px!important;}
+.nav-paper:hover{background:var(--gray-700)!important;}
+
+/* LAYOUT */
+.page-wrap{max-width:1140px;margin:0 auto;padding:0 24px;}
+.two-col{display:grid;grid-template-columns:230px 1fr;gap:32px;align-items:start;}
+
+/* HERO */
+.hero{padding:48px 0 40px;border-bottom:1px solid var(--gray-200);}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--blue-600);background:var(--blue-50);border:1px solid var(--blue-100);padding:4px 10px;border-radius:20px;margin-bottom:16px;}
+.hero h1{font-size:clamp(48px,8vw,68px);font-weight:700;letter-spacing:-.025em;line-height:1.15;color:var(--gray-900);margin-bottom:10px;}
+.hero-sub{font-size:15px;color:var(--gray-500);max-width:640px;line-height:1.7;margin-bottom:22px;}
+.hero-meta{display:flex;align-items:center;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--gray-400);margin-bottom:22px;}
+.hero-meta strong{color:var(--gray-700);}
+.hero-meta-sep{color:var(--gray-300);}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;padding:8px 16px;border-radius:7px;text-decoration:none;cursor:pointer;border:none;transition:all .15s;}
+.btn-dark{background:var(--gray-900);color:white;}
+.btn-dark:hover{background:var(--gray-700);}
+.btn-outline{background:white;color:var(--gray-700);border:1px solid var(--gray-200);}
+.btn-outline:hover{border-color:var(--gray-400);}
+
+/* STATS */
+.stats-row{display:flex;gap:0;border:1px solid var(--gray-200);border-radius:10px;overflow:hidden;margin-top:32px;background:white;}
+.stat-item{flex:1;padding:16px 20px;border-right:1px solid var(--gray-200);text-align:center;}
+.stat-item:last-child{border-right:none;}
+.stat-val{font-size:24px;font-weight:700;letter-spacing:-.03em;color:var(--gray-900);}
+.stat-label{font-size:12px;color:var(--gray-400);margin-top:2px;}
+
+/* SIDEBAR */
+.sidebar-section{margin-bottom:26px;}
+.sidebar-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-400);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--gray-100);}
+.sidebar-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;transition:background .12s;font-size:13px;font-weight:500;color:var(--gray-600);text-decoration:none;border:none;background:none;width:100%;text-align:left;}
+.sidebar-item:hover{background:var(--gray-50);}
+.sidebar-item.active{background:var(--gray-100);color:var(--gray-900);font-weight:600;}
+.item-icon{font-size:15px;width:20px;text-align:center;}
+.item-count{margin-left:auto;font-size:11px;font-family:'IBM Plex Mono',monospace;background:var(--gray-100);color:var(--gray-500);padding:2px 7px;border-radius:10px;}
+.sidebar-item.active .item-count{background:var(--gray-200);}
+.info-box{padding:13px;background:var(--blue-50);border:1px solid var(--blue-100);border-radius:9px;font-size:12px;color:#1e40af;line-height:1.6;}
+.info-box strong{display:block;margin-bottom:3px;}
+
+/* TABLE */
+.content-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+.content-title{font-size:17px;font-weight:700;color:var(--gray-900);letter-spacing:-.01em;}
+.content-desc{font-size:13px;color:var(--gray-400);margin-top:2px;}
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;}
+.ftag{font-size:11px;font-weight:600;letter-spacing:.03em;padding:4px 10px;border-radius:20px;border:1px solid var(--gray-200);background:white;color:var(--gray-500);cursor:pointer;transition:all .12s;}
+.ftag:hover,.ftag.active{background:var(--gray-900);color:white;border-color:var(--gray-900);}
+
+.table-card{background:white;border:1px solid var(--gray-200);border-radius:10px;overflow:hidden;}
+.table-meta{padding:11px 16px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);font-size:12px;color:var(--gray-400);font-family:'IBM Plex Mono',monospace;}
+.table-meta strong{color:var(--gray-600);}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:10px 14px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-400);background:var(--gray-50);border-bottom:1px solid var(--gray-200);text-align:left;white-space:nowrap;}
+thead th.r{text-align:right;}
+thead th.sorted{color:var(--gray-700);}
+tbody tr{border-bottom:1px solid var(--gray-100);transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--gray-50);}
+td{padding:13px 14px;vertical-align:middle;font-size:13px;}
+td.r{text-align:right;}
+.rank-num{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--gray-400);}
+.model-name{font-weight:600;font-size:14px;color:var(--gray-900);}
+.model-org{font-size:12px;color:var(--gray-400);margin-top:1px;}
+.model-note{font-size:11px;color:var(--gray-300);margin-top:3px;font-style:italic;}
+.mtag{font-size:10px;font-weight:600;letter-spacing:.04em;padding:2px 7px;border-radius:4px;border:1px solid;}
+.mtag-prop{background:#eff6ff;color:#2563eb;border-color:#bfdbfe;}
+.score-bar-wrap{display:flex;align-items:center;gap:8px;}
+.score-bar{flex:1;height:5px;background:var(--gray-100);border-radius:3px;overflow:hidden;min-width:60px;}
+.score-fill{height:100%;border-radius:3px;}
+.score-val{font-family:'IBM Plex Mono',monospace;font-size:12px;min-width:34px;text-align:right;}
+.domain-val{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;}
+.break-chip{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;border:1px solid;background:var(--amber-50);color:var(--amber-500);border-color:#fde68a;}
+.na-val{color:var(--gray-300);font-family:'IBM Plex Mono',monospace;font-size:12px;}
+.submit-row td{background:var(--gray-50);}
+.submit-link{font-size:12px;font-weight:600;color:var(--blue-600);text-decoration:none;display:inline-flex;align-items:center;gap:4px;}
+.submit-link:hover{text-decoration:underline;}
+.table-note{font-size:11px;color:var(--gray-300);margin-top:10px;font-family:'IBM Plex Mono',monospace;line-height:1.7;}
+
+/* SECTION */
+.section{padding:52px 0;}
+.section-hd{margin-bottom:26px;}
+.section-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue-600);margin-bottom:5px;}
+.section-title{font-size:22px;font-weight:700;letter-spacing:-.02em;color:var(--gray-900);}
+.section-desc{font-size:14px;color:var(--gray-500);margin-top:6px;max-width:560px;line-height:1.7;}
+
+/* DOMAIN CARDS */
+.domain-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:32px;}
+.domain-card{background:white;border:1px solid var(--gray-200);border-radius:10px;padding:18px;position:relative;overflow:hidden;transition:box-shadow .15s;}
+.domain-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.dc-top{position:absolute;top:0;left:0;right:0;height:3px;background:var(--dc-color,var(--gray-200));}
+.dc-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:12px;background:var(--dc-bg,var(--gray-100));}
+.dc-name{font-size:13px;font-weight:700;color:var(--gray-800);margin-bottom:5px;}
+.dc-desc{font-size:12px;color:var(--gray-500);line-height:1.6;}
+.dc-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:11px;padding-top:10px;border-top:1px solid var(--gray-100);}
+.dc-chip{font-size:10px;font-weight:600;letter-spacing:.04em;padding:2px 7px;border-radius:4px;background:var(--gray-100);color:var(--gray-500);}
+
+/* TAXONOMY */
+.taxonomy-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+.tax-card{background:white;border:1px solid var(--gray-200);border-radius:10px;padding:18px;position:relative;overflow:hidden;transition:border-color .15s,box-shadow .15s;}
+.tax-card:hover{border-color:var(--gray-300);box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.tc-top{position:absolute;top:0;left:0;right:0;height:3px;background:var(--tc,var(--gray-200));opacity:.8;}
+.tc-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:12px;background:var(--ti-bg,var(--gray-100));}
+.tc-name{font-size:13px;font-weight:700;color:var(--gray-800);margin-bottom:5px;}
+.tc-desc{font-size:12px;color:var(--gray-500);line-height:1.6;}
+.tc-domains{display:flex;gap:4px;flex-wrap:wrap;margin-top:11px;padding-top:10px;border-top:1px solid var(--gray-100);}
+.tc-domain{font-size:10px;font-weight:600;letter-spacing:.04em;padding:2px 7px;border-radius:4px;background:var(--gray-100);color:var(--gray-500);}
+
+/* CONTRIBUTE */
+.contrib-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.contrib-card{background:white;border:1px solid var(--gray-200);border-radius:10px;padding:22px;}
+.contrib-card.dark{background:var(--gray-900);border-color:var(--gray-700);grid-column:1/-1;}
+.contrib-card.dark .contrib-step{color:#93c5fd;}
+.contrib-card.dark .contrib-title,.contrib-card.dark .contrib-desc,.contrib-card.dark li{color:white;}
+.contrib-card.dark .contrib-desc,.contrib-card.dark li{color:#d1d5db;}
+.contrib-step{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue-600);margin-bottom:8px;}
+.contrib-title{font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:8px;}
+.contrib-desc{font-size:13px;color:var(--gray-500);line-height:1.6;}
+.code-block{margin-top:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#86efac;line-height:1.75;overflow-x:auto;white-space:pre;}
+.contrib-list{list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:7px;}
+.contrib-list li{font-size:13px;color:var(--gray-500);display:flex;gap:8px;align-items:flex-start;line-height:1.5;}
+.contrib-list li::before{content:"→";color:var(--gray-400);flex-shrink:0;}
+code{font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--gray-100);padding:1px 5px;border-radius:3px;color:var(--gray-700);}
+
+/* PAPER */
+.paper-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.citation-block{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:18px 20px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gray-600);line-height:1.9;white-space:pre;overflow-x:auto;margin-top:14px;}
+
+/* FOOTER */
+footer{background:var(--gray-900);color:white;padding:32px 0;border-top:1px solid var(--gray-200);}
+.footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+.footer-brand{font-size:14px;font-weight:700;}
+.footer-note{font-size:12px;color:#9ca3af;margin-top:3px;}
+.footer-links{display:flex;gap:20px;list-style:none;}
+.footer-links a{font-size:13px;color:#9ca3af;text-decoration:none;transition:color .12s;}
+.footer-links a:hover{color:white;}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .45s ease,transform .45s ease;}
+.reveal.visible{opacity:1;transform:none;}
+
+@media(max-width:820px){
+  .two-col{grid-template-columns:1fr;}
+  .contrib-grid,.paper-grid,.domain-grid{grid-template-columns:1fr;}
+  .contrib-card.dark{grid-column:auto;}
+  .stats-row{flex-wrap:wrap;}
+  .stat-item{min-width:45%;border-bottom:1px solid var(--gray-200);}
+  .nav-links li:not(:last-child){display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="top-banner">
+  <!-- 📄 &nbsp;ICML 2026 Position Paper · Under Review &nbsp;·&nbsp; -->
+  <a href="#paper">Read the Paper</a> &nbsp;·&nbsp;
+  <a href="#contribute">Submit Your Model</a>
+</div>
+
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#">
+      <div class="logo-mark">H</div>
+      <div>
+        <div class="logo-text">HORIZON</div>
+        <div class="logo-sub">Long-Horizon Agent Benchmark</div>
+      </div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#leaderboard">Leaderboard</a></li>
+      <li><a href="#taxonomy">Taxonomy</a></li>
+      <li><a href="#contribute">Contribute</a></li>
+      <li><a href="#paper" class="nav-paper">📄 Paper</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-noise"></div>
+
+  <div class="hero-inner">
+    <div class="hero-badge-wrap">
+      <!-- <span class="hero-badge-pill">ICML 2026</span>
+      <span class="hero-badge-dot"></span>
+      <span class="hero-badge-text">Position Paper · Under Review</span> -->
+    </div>
+
+    <div class="hero-title-wrap">
+      <div class="hero-label">HORIZON DIAGNOSTIC SUITE</div>
+      <h1>
+        <span class="h1-line">The Long-Horizon</span>
+        <span class="h1-line h1-accent">Task Mirage?</span>
+      </h1>
+      <p class="hero-tagline">Diagnosing <span class="tag-hl">Where</span> and <span class="tag-hl">Why</span> Agentic Systems Break</p>
+    </div>
+
+    <p class="hero-sub">
+      A diagnostic suite for systematically constructing tasks and characterizing long-horizon failures in LLM-based agents —
+      measuring performance degradation across increasing intrinsic horizons H* and attributing breakdowns via a 7-category failure taxonomy across 4 domains.
+    </p>
+
+    <div class="hero-actions">
+      <a href="#contribute" class="hero-btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+        Submit Your Model
+      </a>
+      <a href="#paper" class="hero-btn-ghost">📄 Paper</a>
+      <a href="https://github.com" target="_blank" class="hero-btn-ghost">⭐ GitHub</a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hs-val">4</div>
+        <div class="hs-label">Domains</div>
+      </div>
+      <div class="hero-stat-div"></div>
+      <div class="hero-stat">
+        <div class="hs-val">7</div>
+        <div class="hs-label">Failure Categories</div>
+      </div>
+      <div class="hero-stat-div"></div>
+      <div class="hero-stat">
+        <div class="hs-val">H*</div>
+        <div class="hs-label">Intrinsic Horizon</div>
+      </div>
+      <div class="hero-stat-div"></div>
+      <div class="hero-stat">
+        <div class="hs-val">s</div>
+        <div class="hs-label">Extension Levels</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- degradation curve sketch -->
+  <div class="hero-curve-wrap">
+    <svg class="hero-curve" viewBox="0 0 480 120" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="cg1" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#60a5fa"/>
+          <stop offset="100%" stop-color="#a78bfa"/>
+        </linearGradient>
+        <linearGradient id="cg2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#34d399"/>
+          <stop offset="100%" stop-color="#60a5fa"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- grid lines -->
+      <line x1="0" y1="30" x2="480" y2="30" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+      <line x1="0" y1="60" x2="480" y2="60" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+      <line x1="0" y1="90" x2="480" y2="90" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+      <line x1="60" y1="0" x2="60" y2="120" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+      <line x1="120" y1="0" x2="120" y2="120" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+      <line x1="180" y1="0" x2="180" y2="120" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+      <line x1="240" y1="0" x2="240" y2="120" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+      <line x1="300" y1="0" x2="300" y2="120" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+      <line x1="360" y1="0" x2="360" y2="120" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+      <line x1="420" y1="0" x2="420" y2="120" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+      <!-- area fill 1 -->
+      <path d="M0,20 C40,22 70,24 100,45 C130,66 140,95 180,100 C220,105 240,108 480,112 L480,120 L0,120Z"
+            fill="url(#cg1)" opacity=".12"/>
+      <!-- area fill 2 -->
+      <path d="M0,18 C50,19 80,22 110,38 C140,54 155,88 190,96 C225,104 260,107 480,110 L480,120 L0,120Z"
+            fill="url(#cg2)" opacity=".10"/>
+      <!-- line 1: claude -->
+      <path class="curve-path" d="M0,20 C40,22 70,24 100,45 C130,66 140,95 180,100 C220,105 240,108 480,112"
+            stroke="url(#cg1)" stroke-width="2" fill="none" filter="url(#glow)"/>
+      <!-- line 2: gpt-mini -->
+      <path class="curve-path" d="M0,18 C50,19 80,22 110,38 C140,54 155,88 190,96 C225,104 260,107 480,110"
+            stroke="url(#cg2)" stroke-width="2" fill="none" filter="url(#glow)" stroke-dasharray="6 3"/>
+      <!-- labels -->
+      <text x="8" y="17" font-size="8" fill="rgba(255,255,255,.5)" font-family="IBM Plex Mono,monospace">100%</text>
+      <text x="8" y="107" font-size="8" fill="rgba(255,255,255,.5)" font-family="IBM Plex Mono,monospace">0%</text>
+      <text x="2" y="135" font-size="8" fill="rgba(255,255,255,.4)" font-family="IBM Plex Mono,monospace">s=0</text>
+      <text x="452" y="135" font-size="8" fill="rgba(255,255,255,.4)" font-family="IBM Plex Mono,monospace">s=8</text>
+      <!-- legend -->
+      <line x1="340" y1="10" x2="358" y2="10" stroke="#60a5fa" stroke-width="2"/>
+      <text x="362" y="14" font-size="9" fill="rgba(255,255,255,.6)" font-family="IBM Plex Mono,monospace">Claude-4-Sonnet</text>
+      <line x1="340" y1="24" x2="358" y2="24" stroke="#34d399" stroke-width="2" stroke-dasharray="4 2"/>
+      <text x="362" y="28" font-size="9" fill="rgba(255,255,255,.6)" font-family="IBM Plex Mono,monospace">GPT-5-mini</text>
+      <!-- break region annotation -->
+      <rect x="88" y="0" width="60" height="120" fill="rgba(239,68,68,.06)" rx="2"/>
+      <line x1="88" y1="0" x2="88" y2="120" stroke="rgba(239,68,68,.35)" stroke-width="1" stroke-dasharray="3 2"/>
+      <text x="92" y="10" font-size="8" fill="rgba(239,68,68,.7)" font-family="IBM Plex Mono,monospace">break</text>
+      <text x="92" y="19" font-size="8" fill="rgba(239,68,68,.7)" font-family="IBM Plex Mono,monospace">region</text>
+    </svg>
+    <div class="hero-curve-label">Performance vs. Extension Level s — Figure 3 (paper)</div>
+  </div>
+</div>
+
+<style>
+/* ── HERO OVERRIDE ── */
+.hero {
+  position: relative;
+  background: #0a0e1a;
+  overflow: hidden;
+  padding: 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+#hero-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+.hero-noise {
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: .025;
+  pointer-events: none;
+}
+.hero-inner {
+  position: relative; z-index: 2;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 72px 24px 40px;
+  text-align: center;
+}
+.hero-badge-wrap {
+  display: inline-flex; align-items: center; gap: 10px;
+  margin-bottom: 28px;
+  font-size: 12px;
+}
+.hero-badge-pill {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.9);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; font-weight: 500; letter-spacing: .1em;
+  padding: 4px 12px; border-radius: 20px;
+  backdrop-filter: blur(8px);
+}
+.hero-badge-dot {
+  width: 3px; height: 3px; border-radius: 50%;
+  background: rgba(255,255,255,.25);
+}
+.hero-badge-text {
+  font-size: 12px; color: rgba(255,255,255,.4);
+  letter-spacing: .04em;
+}
+.hero-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; font-weight: 500; letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.25);
+  margin-bottom: 16px;
+}
+h1 {
+  font-size: clamp(32px, 5.5vw, 58px);
+  font-weight: 700;
+  letter-spacing: -.03em;
+  line-height: 1.08;
+  margin-bottom: 14px;
+  display: flex; flex-direction: row; align-items: center; gap: 0.3em;
+}
+.h1-line {
+  color: white;
+}
+.h1-accent {
+  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-tagline {
+  font-size: 17px; font-weight: 500;
+  color: rgba(255,255,255,.55);
+  margin-bottom: 22px; letter-spacing: -.01em;
+}
+.tag-hl {
+  color: white; font-weight: 700;
+  background: rgba(255,255,255,.08);
+  padding: 1px 7px; border-radius: 5px;
+  border: 1px solid rgba(255,255,255,.12);
+}
+.hero-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,.38);
+  max-width: 760px; margin: 0 auto 32px;
+  line-height: 1.75;
+}
+.hero-actions {
+  display: flex; justify-content: center; align-items: center;
+  gap: 10px; margin-bottom: 44px; flex-wrap: wrap;
+}
+.hero-btn-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px; font-weight: 700;
+  padding: 10px 22px; border-radius: 8px;
+  text-decoration: none;
+  background: white; color: #0a0e1a;
+  transition: all .15s;
+  letter-spacing: -.01em;
+}
+.hero-btn-primary:hover { background: #e0e7ff; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,255,255,.12); }
+.hero-btn-ghost {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px; font-weight: 600;
+  padding: 10px 18px; border-radius: 8px;
+  text-decoration: none;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.7);
+  transition: all .15s;
+}
+.hero-btn-ghost:hover { background: rgba(255,255,255,.1); color: white; border-color: rgba(255,255,255,.2); }
+
+.hero-stats {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,.03);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  max-width: 720px; margin: 0 auto;
+}
+.hero-stat { flex: 1; padding: 16px 8px; text-align: center; }
+.hero-stat-div { width: 1px; background: rgba(255,255,255,.07); align-self: stretch; }
+.hs-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 20px; font-weight: 500;
+  color: white; letter-spacing: -.02em;
+}
+.hs-label {
+  font-size: 11px; color: rgba(255,255,255,.3);
+  margin-top: 3px; letter-spacing: .02em;
+}
+
+/* curve */
+.hero-curve-wrap {
+  position: relative; z-index: 2;
+  max-width: 900px; margin: 0 auto;
+  padding: 0 24px 48px;
+}
+.hero-curve {
+  width: 100%; height: auto;
+  display: block;
+}
+.hero-curve-label {
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: rgba(255,255,255,.2);
+  margin-top: 8px; letter-spacing: .06em;
+}
+.curve-path {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: draw-line 1.8s ease forwards;
+  animation-delay: .4s;
+}
+.curve-path:nth-child(2) { animation-delay: .65s; }
+@keyframes draw-line {
+  to { stroke-dashoffset: 0; }
+}
+</style>
+
+<script id="hero-canvas-script">
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [], raf;
+
+  function resize() {
+    W = canvas.offsetWidth; H = canvas.offsetHeight;
+    canvas.width = W * devicePixelRatio;
+    canvas.height = H * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+  }
+
+  function randomParticle() {
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.2 + 0.2,
+      dx: (Math.random() - .5) * .18,
+      dy: (Math.random() - .5) * .14,
+      o: Math.random() * .4 + .05
+    };
+  }
+
+  function init() {
+    resize();
+    particles = Array.from({length: 90}, randomParticle);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // subtle gradient
+    const g = ctx.createRadialGradient(W*.5, H*.4, 0, W*.5, H*.4, W*.7);
+    g.addColorStop(0, 'rgba(96,165,250,.07)');
+    g.addColorStop(.5, 'rgba(167,139,250,.04)');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // particles
+    for (const p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${p.o})`;
+      ctx.fill();
+      p.x += p.dx; p.y += p.dy;
+      if (p.x < -2) p.x = W + 2;
+      if (p.x > W + 2) p.x = -2;
+      if (p.y < -2) p.y = H + 2;
+      if (p.y > H + 2) p.y = -2;
+    }
+
+    // faint horizontal scan line
+    const scanY = ((Date.now() / 6000) % 1) * H;
+    const sg = ctx.createLinearGradient(0, scanY - 40, 0, scanY + 40);
+    sg.addColorStop(0, 'transparent');
+    sg.addColorStop(.5, 'rgba(255,255,255,.015)');
+    sg.addColorStop(1, 'transparent');
+    ctx.fillStyle = sg;
+    ctx.fillRect(0, scanY - 40, W, 80);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { cancelAnimationFrame(raf); init(); draw(); });
+  init();
+  draw();
+})();
+</script>
+
+<!-- BODY -->
+<div style="padding:40px 0 60px;">
+  <div class="page-wrap">
+    <div class="two-col">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-title">Filter by Domain</div>
+          <button class="sidebar-item active" onclick="switchDomain(this,'all')">
+            <span class="item-icon">⊞</span> All Domains
+            <span class="item-count">3</span>
+          </button>
+          <button class="sidebar-item" onclick="switchDomain(this,'web')">
+            <span class="item-icon">🌐</span> Web Navigation
+            <span class="item-count">2</span>
+          </button>
+          <button class="sidebar-item" onclick="switchDomain(this,'os')">
+            <span class="item-icon">💻</span> Operating System
+            <span class="item-count">2</span>
+          </button>
+          <button class="sidebar-item" onclick="switchDomain(this,'db')">
+            <span class="item-icon">🗄️</span> Database
+            <span class="item-count">2</span>
+          </button>
+          <button class="sidebar-item" onclick="switchDomain(this,'em')">
+            <span class="item-icon">🤖</span> Embodied
+            <span class="item-count">2</span>
+          </button>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-title">Navigation</div>
+          <a class="sidebar-item" href="#taxonomy">
+            <span class="item-icon">🔬</span> Failure Taxonomy
+          </a>
+          <a class="sidebar-item" href="#contribute">
+            <span class="item-icon">＋</span> Submit a Model
+          </a>
+          <a class="sidebar-item" href="#paper">
+            <span class="item-icon">📄</span> Paper &amp; Citation
+          </a>
+        </div>
+
+        <div class="info-box">
+          <strong>Intrinsic Horizon H*</strong>
+          Minimum effective actions required by an optimal policy — defined independent of agent implementation, via expert demonstrations or oracle solvers.
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <div id="leaderboard">
+        <div class="content-header">
+          <div>
+            <div class="content-title">Leaderboard</div>
+            <div class="content-desc" id="table-desc">Average success rate across all four domains and extension levels.</div>
+          </div>
+        </div>
+
+        <div class="table-card reveal">
+          <div class="table-meta">
+            <strong id="row-count">3 models</strong>&nbsp;·&nbsp;
+            sorted by avg success rate &nbsp;·&nbsp;
+            break level = first s where success drops sharply
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:36px">#</th>
+                <th>Model</th>
+                <th class="sorted">Avg ↓</th>
+                <th class="r">Web</th>
+                <th class="r">OS</th>
+                <th class="r">Database</th>
+                <th class="r">Embodied</th>
+                <th>Break Level</th>
+              </tr>
+            </thead>
+            <tbody id="lb-body"></tbody>
+          </table>
+        </div>
+        <p class="table-note">
+          GPT-5 evaluated on Embodied; GPT-5-mini on Web / OS / Database;&nbsp;
+          Claude-4-Sonnet on all four domains.
+        </p>
+
+        <!-- Domain cards -->
+        <div style="margin-top:44px;">
+          <div class="section-hd">
+            <div class="section-label">Benchmark Domains</div>
+            <div class="section-title">Controlled Horizon Extension</div>
+            <p class="section-desc">Tasks are constructed with systematically increasing H* via two extension methods.</p>
+          </div>
+          <div class="domain-grid reveal">
+            <div class="domain-card" style="--dc-color:#3b82f6;--dc-bg:#eff6ff">
+              <div class="dc-top"></div>
+              <div class="dc-icon">🌐</div>
+              <div class="dc-name">Web Navigation</div>
+              <div class="dc-desc">Based on WebArena. Tasks span e-commerce, CMS, GitLab, Reddit, and mapping. <strong>Breadth extension</strong> composes independent subtasks into composite workflows. Collapses earliest — at very small s.</div>
+              <div class="dc-chips">
+                <span class="dc-chip">Breadth Extension</span>
+                <span class="dc-chip">s = 1..4</span>
+                <span class="dc-chip">WebArena base</span>
+              </div>
+            </div>
+            <div class="domain-card" style="--dc-color:#8b5cf6;--dc-bg:#f5f3ff">
+              <div class="dc-top"></div>
+              <div class="dc-icon">💻</div>
+              <div class="dc-name">Operating System</div>
+              <div class="dc-desc">Based on AgentBench. Shell-level control with file permission chains. <strong>Depth extension</strong> inserts non-skippable intermediate states — e.g., enforce read-only before making writable.</div>
+              <div class="dc-chips">
+                <span class="dc-chip">Depth Extension</span>
+                <span class="dc-chip">s = 1..8</span>
+                <span class="dc-chip">AgentBench base</span>
+              </div>
+            </div>
+            <div class="domain-card" style="--dc-color:#f59e0b;--dc-bg:#fffbeb">
+              <div class="dc-top"></div>
+              <div class="dc-icon">🗄️</div>
+              <div class="dc-name">Database</div>
+              <div class="dc-desc">Custom environment built from scratch. 3-module agent: Selector → Decomposer → Refiner. Evaluated by Filter-k accuracy. Tasks range from simple queries to multi-table joins with nested sub-goals.</div>
+              <div class="dc-chips">
+                <span class="dc-chip">Depth Extension</span>
+                <span class="dc-chip">s = 1..8</span>
+                <span class="dc-chip">Custom env</span>
+              </div>
+            </div>
+            <div class="domain-card" style="--dc-color:#22c55e;--dc-bg:#f0fdf4">
+              <div class="dc-top"></div>
+              <div class="dc-icon">🤖</div>
+              <div class="dc-name">Embodied Manipulation</div>
+              <div class="dc-desc">IsaacSim 5.0 with bimanual Franka Panda arms. Three objects: red, blue, green cubes. Four primitives: <code>home</code>, <code>move_to_pose</code>, <code>grasp</code>, <code>release</code>. Steepest degradation of all domains.</div>
+              <div class="dc-chips">
+                <span class="dc-chip">Breadth Extension</span>
+                <span class="dc-chip">s = 1..2</span>
+                <span class="dc-chip">IsaacSim 5.0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAXONOMY -->
+<div class="section" id="taxonomy" style="background:var(--gray-50);border-top:1px solid var(--gray-200);border-bottom:1px solid var(--gray-200);">
+  <div class="page-wrap">
+    <div class="section-hd reveal">
+      <div class="section-label">Failure Attribution</div>
+      <div class="section-title">7-Category Failure Taxonomy</div>
+      <p class="section-desc">
+        Categories represent <strong>orthogonal dimensions</strong> of agent behavior — not mutually exclusive classes.
+        A single failed trajectory may exhibit multiple failure types simultaneously.
+        Validated by two domain experts via blind annotation and consensus discussion.
+      </p>
+    </div>
+    <div class="taxonomy-grid reveal" id="taxonomy-grid"></div>
+  </div>
+</div>
+
+<!-- CONTRIBUTE -->
+<div class="section" id="contribute">
+  <div class="page-wrap">
+    <div class="section-hd reveal">
+      <div class="section-label">Community</div>
+      <div class="section-title">Contribute to HORIZON</div>
+      <p class="section-desc">Evaluate your model and submit results to the leaderboard. All model families and research groups welcome.</p>
+    </div>
+    <div class="contrib-grid reveal">
+      <div class="contrib-card dark">
+        <div class="contrib-step">Step 01 — Evaluate</div>
+        <div class="contrib-title">Run Your Agent on HORIZON</div>
+        <div class="contrib-desc">Clone the evaluation harness and run across all four domains. Baseline tasks are pre-verified solvable, so performance degradation reflects genuine horizon difficulty — not task ambiguity.</div>
+        <div class="code-block">git clone https://github.com/horizon-bench/horizon
+cd horizon && pip install -r requirements.txt
+
+# Evaluate across all domains
+python evaluate.py \
+  --agent your_agent \
+  --domains web os db embodied \
+  --output results.json</div>
+      </div>
+      <div class="contrib-card">
+        <div class="contrib-step">Step 02 — Submit</div>
+        <div class="contrib-title">Open a Pull Request</div>
+        <div class="contrib-desc">Submit your <code>results.json</code> with per-task success rates and a model card. We validate and add you to the leaderboard.</div>
+        <ul class="contrib-list">
+          <li>Per-task success rates across all extension levels s</li>
+          <li>Model card: parameter count, context length, training details</li>
+          <li>Optionally annotate ≥20 failed trajectories with the 7-category taxonomy</li>
+          <li>Human or LLM-as-a-Judge annotations both accepted</li>
+        </ul>
+        <a href="https://github.com" target="_blank" class="btn btn-dark" style="margin-top:18px;display:inline-flex;font-size:12px;">Open a Pull Request →</a>
+      </div>
+      <div class="contrib-card">
+        <div class="contrib-step">Step 03 — Extend the Benchmark</div>
+        <div class="contrib-title">Add New Tasks or Domains</div>
+        <div class="contrib-desc">HORIZON is designed to be extensible. Propose new baseline tasks or new domains following our horizon-extension protocol.</div>
+        <ul class="contrib-list">
+          <li>New tasks require an oracle/expert solution to establish H*</li>
+          <li>Depth extension: each added step must be non-skippable by an optimal policy</li>
+          <li>Breadth extension: H*(s) must be additive across composed subtasks</li>
+          <li>All 7 taxonomy categories must be representable in the new domain</li>
+        </ul>
+      </div>
+      <div class="contrib-card">
+        <div class="contrib-step">Step 04 — Annotate Failures</div>
+        <div class="contrib-title">Contribute Failure Analysis</div>
+        <div class="contrib-desc">Failure attribution is as important as success rate. Annotate failed trajectories to build a richer diagnostic picture for the community.</div>
+        <ul class="contrib-list">
+          <li>Use the 7-category taxonomy — categories are non-exclusive</li>
+          <li>LLM-as-a-Judge pipeline provided for scalable annotation</li>
+          <li>Grounded in trajectory context for reproducible analysis</li>
+          <li>Enables targeted interventions beyond model scaling</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAPER -->
+<div class="section" id="paper" style="background:var(--gray-50);border-top:1px solid var(--gray-200);">
+  <div class="page-wrap">
+    <div class="section-hd reveal">
+      <div class="section-label">Publication</div>
+      <div class="section-title">Paper &amp; Citation</div>
+    </div>
+    <div class="paper-grid reveal">
+      <div class="contrib-card" style="grid-column:1/-1;">
+        <div class="contrib-step">Abstract</div>
+        <div class="contrib-title" style="font-size:32px;font-weight:800;line-height:1.3;">
+          <span style="white-space:nowrap;">Position: The Long-Horizon Task Mirage?</span><br/>
+          Diagnosing Where and Why Agentic Systems Break
+        </div>
+        <!-- <div class="contrib-title" style="font-size:15px;line-height:1.4;">Position: The Long-Horizon Task Mirage?<br/>Diagnosing Where and Why Agentic Systems Break</div> -->
+        <p style="font-size:13px;color:var(--gray-500);margin-top:12px;line-height:1.7;">
+          We argue that identifying the breaking point of long-horizon agents is inherently challenging, but can be meaningfully studied through a structured diagnostic framework. We propose HORIZON, which generates tasks with increasing intrinsic horizons and quantifies how agent success degrades — using a seven-category failure taxonomy applied across web navigation, operating systems, databases, and embodied manipulation.
+        </p>
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+          <a href="https://arxiv.org" target="_blank" class="btn btn-dark" style="font-size:12px;">📄 arXiv Preprint</a>
+          <a href="https://github.com" target="_blank" class="btn btn-outline" style="font-size:12px;">GitHub ↗</a>
+        </div>
+      </div>
+      <div class="contrib-card">
+        <div class="contrib-step">BibTeX</div>
+        <div class="contrib-title" style="font-size:15px;">Cite This Work</div>
+        <div class="citation-block">@inproceedings{horizon2026,
+  <!-- title     = {Position: The Long-Horizon
+               Task Mirage? Diagnosing
+               Where and Why Agentic
+               Systems Break},
+  author    = {Anonymous Authors},
+  booktitle = {ICML},
+  year      = {2026},
+  note      = {Under Review} -->
+}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="page-wrap">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand">HORIZON Benchmark</div>
+        <!-- <div class="footer-note">Long-Horizon LLM Agent Evaluation · ICML 2026 (Under Review)</div> -->
+      </div>
+      <ul class="footer-links">
+        <li><a href="#paper">Paper</a></li>
+        <li><a href="https://github.com">GitHub</a></li>
+        <li><a href="#contribute">Contribute</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Models from the paper only
+// GPT-5-mini: Web/OS/DB; GPT-5: Embodied; Claude-4-Sonnet: all four
+const MODELS = [
+  {
+    name:"Claude-4-Sonnet", org:"Anthropic", type:"prop",
+    web:34, os:51, db:45, em:51,
+    note:"All four domains",
+    brk:{web:"s≈2",os:"s≈4",db:"s≈5",em:"s=2"}
+  },
+  {
+    name:"GPT-5-mini", org:"OpenAI", type:"prop",
+    web:36, os:42, db:38, em:null,
+    note:"Web, OS, Database",
+    brk:{web:"s≈2",os:"s≈4",db:"s≈5",em:null}
+  },
+  {
+    name:"GPT-5", org:"OpenAI", type:"prop",
+    web:null, os:null, db:null, em:60,
+    note:"Embodied only",
+    brk:{web:null,os:null,db:null,em:"s=2"}
+  }
+];
+
+const TAXONOMY = [
+  {icon:"🌪️",name:"Environment Disturbance",color:"#ef4444",bg:"#fef2f2",
+   desc:"External world changes in ways not modeled by the agent's plan — network instability, dynamic UI pop-ups, schema drift, stochastic physical dynamics invalidate mid-execution."},
+  {icon:"👁️",name:"Unable to Detect Environment Change",color:"#f97316",bg:"#fff7ed",
+   desc:"Agent fails to perceive a state transition — false transitions (believing a command succeeded when it didn't) or missed transitions — causing belief to diverge from actual environment state."},
+  {icon:"📋",name:"Ill-defined Instruction",color:"#f59e0b",bg:"#fffbeb",
+   desc:"Task specification is ambiguous, underspecified, or misaligned with the environment. Agent hallucinates plausible values (e.g., fabricated email, non-existent field) instead of requesting clarification."},
+  {icon:"🧩",name:"Partially Understand Instruction",color:"#22c55e",bg:"#f0fdf4",
+   desc:"Agent grasps the primary goal but ignores critical modifiers, exception clauses, or qualifiers — e.g., missing 'mismatching', ignoring 'except those owned by system'."},
+  {icon:"💾",name:"Catastrophic Forgetting",color:"#3b82f6",bg:"#eff6ff",
+   desc:"Agent fails to retain earlier constraints while continuing to operate. Commitments specified early — 'new only', 'never touch payments schema' — are lost as horizons grow."},
+  {icon:"🎲",name:"False Assumptions",color:"#8b5cf6",bg:"#f5f3ff",
+   desc:"Agent applies overgeneralized priors as universally true without verification — hallucinated schema columns, assumed file ownership, fabricated personal info, pattern bias overriding task constraints."},
+  {icon:"🗺️",name:"Planning Errors (Sub-plan & Action)",color:"#ec4899",bg:"#fdf2f8",
+   desc:"Incorrect sub-task decomposition or wrong concrete action selection. Includes wrong ordering (dropping backup before transfer), omitted prerequisites, and premature termination."},
+  {icon:"📈",name:"History Error Accumulation",color:"#0ea5e9",bg:"#f0f9ff",
+   desc:"Small early mistakes persist and compound — incorrect UI state, corrupted queries, stale element IDs. Each step amplifies the initial error rather than correcting it, leading to trajectory derailment."},
+  {icon:"🧠",name:"Memory Limitations",color:"#14b8a6",bg:"#f0fdfa",
+   desc:"Task-critical information (constraints, schema elements, intermediate values) exceeds context capacity or is lossy-summarized. Agents act as if earlier facts never existed."}
+];
+
+let currentDomain='all';
+
+function avg(m){
+  const v=[m.web,m.os,m.db,m.em].filter(x=>x!==null);
+  if(!v.length)return null;
+  return Math.round(v.reduce((a,b)=>a+b)/v.length);
+}
+function getV(m,d){
+  if(d==='all')return avg(m);
+  return m[d]??null;
+}
+function scoreColor(v){
+  if(v===null)return'var(--gray-300)';
+  if(v>=50)return'#16a34a';
+  if(v>=35)return'#d97706';
+  return'#dc2626';
+}
+function barColor(v){
+  if(v===null)return'var(--gray-200)';
+  if(v>=50)return'#22c55e';
+  if(v>=35)return'#f59e0b';
+  return'#ef4444';
+}
+
+function renderTable(){
+  const rows=[...MODELS].filter(m=>{
+    if(currentDomain!=='all'&&getV(m,currentDomain)===null)return false;
+    return true;
+  }).sort((a,b)=>(getV(b,currentDomain)??-1)-(getV(a,currentDomain)??-1));
+
+  document.getElementById('row-count').innerHTML=`<strong>${rows.length+1} model${rows.length+1!==1?'s':''}</strong>`;
+
+  document.getElementById('lb-body').innerHTML=rows.map((m,i)=>{
+    const v=getV(m,currentDomain);
+    const pct=v??0;
+    const brkVal=currentDomain==='all'
+      ?Object.entries(m.brk).filter(([,val])=>val).map(([k,val])=>`${k.toUpperCase()}: ${val}`).join(' · ')
+      :m.brk[currentDomain];
+
+    return`<tr>
+      <td><span class="rank-num">${i+1}</span></td>
+      <td>
+        <div class="model-name">${m.name}</div>
+        <div class="model-org">${m.org}</div>
+        <div class="model-note">${m.note}</div>
+      </td>
+      <td>
+        ${v!==null?`<div class="score-bar-wrap">
+          <div class="score-bar"><div class="score-fill" style="width:${pct}%;background:${barColor(v)}"></div></div>
+          <span class="score-val" style="color:${scoreColor(v)}">${v}%</span>
+        </div>`:`<span class="na-val">N/A</span>`}
+      </td>
+      ${['web','os','db','em'].map(d=>{
+        const dv=m[d];
+        return`<td class="r"><span class="domain-val" style="color:${scoreColor(dv)}">${dv!==null?dv+'%':'—'}</span></td>`;
+      }).join('')}
+      <td>
+        ${brkVal?`<span class="break-chip" style="font-size:10px">${brkVal}</span>`:'—'}
+      </td>
+    </tr>`;
+  }).join('')+`<tr class="submit-row">
+    <td><span class="rank-num" style="color:var(--gray-300)">—</span></td>
+    <td><div class="model-name" style="color:var(--gray-400)">Your Model</div><div class="model-org">Open for Submissions</div></td>
+    <td colspan="6"><a href="#contribute" class="submit-link">+ Submit your results via Pull Request →</a></td>
+  </tr>`;
+}
+
+function switchDomain(el,domain){
+  document.querySelectorAll('.sidebar-item').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  currentDomain=domain;
+  const d={
+    all:'Average success rate across all four domains and extension levels.',
+    web:'Web Navigation — success rate across extension levels s = 1..4.',
+    os:'Operating System — success rate across extension levels s = 1..8.',
+    db:'Database — Filter-k accuracy across extension levels s = 1..8.',
+    em:'Embodied Manipulation — success rate at extension levels s = 1 and s = 2.'
+  };
+  document.getElementById('table-desc').textContent=d[domain];
+  renderTable();
+}
+
+function renderTaxonomy(){
+  document.getElementById('taxonomy-grid').innerHTML=TAXONOMY.map(t=>`
+    <div class="tax-card" style="--tc:${t.color};--ti-bg:${t.bg}">
+      <div class="tc-top"></div>
+      <div class="tc-icon">${t.icon}</div>
+      <div class="tc-name">${t.name}</div>
+      <div class="tc-desc">${t.desc}</div>
+      <div class="tc-domains">
+        <span class="tc-domain">Web</span>
+        <span class="tc-domain">OS</span>
+        <span class="tc-domain">Database</span>
+        <span class="tc-domain">Embodied</span>
+      </div>
+    </div>`).join('');
+}
+
+function initReveal(){
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});
+  },{threshold:.08,rootMargin:'0px 0px -30px 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+}
+
+renderTable();
+renderTaxonomy();
+initReveal();
+</script>
+</body>
+</html>
