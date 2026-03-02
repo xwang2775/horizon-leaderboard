@@ -579,7 +579,7 @@ h1 {
           <div class="sidebar-title">Filter by Domain</div>
           <button class="sidebar-item active" onclick="switchDomain(this,'all')">
             <span class="item-icon">⊞</span> All Domains
-            <span class="item-count">3</span>
+            <span class="item-count">2</span>
           </button>
           <button class="sidebar-item" onclick="switchDomain(this,'web')">
             <span class="item-icon">🌐</span> Web Navigation
@@ -650,8 +650,7 @@ h1 {
           </table>
         </div>
         <p class="table-note">
-          GPT-5 evaluated on Embodied; GPT-5-mini on Web / OS / Database;&nbsp;
-          Claude-4-Sonnet on all four domains.
+          GPT-5-mini and Claude-4-Sonnet evaluated on all four domains.
         </p>
 
         <!-- Domain cards -->
@@ -702,7 +701,7 @@ h1 {
               <div class="dc-desc">IsaacSim 5.0 with bimanual Franka Panda arms. Three objects: red, blue, green cubes. Four primitives: <code>home</code>, <code>move_to_pose</code>, <code>grasp</code>, <code>release</code>. Steepest degradation of all domains.</div>
               <div class="dc-chips">
                 <span class="dc-chip">Breadth Extension</span>
-                <span class="dc-chip">s = 1..2</span>
+                <span class="dc-chip">s = 1..5</span>
                 <span class="dc-chip">IsaacSim 5.0</span>
               </div>
             </div>
@@ -852,21 +851,15 @@ python evaluate.py \
 const MODELS = [
   {
     name:"Claude-4-Sonnet", org:"Anthropic", type:"prop",
-    web:34, os:51, db:45, em:51,
+    web:32, os:51, db:45, em:27,
     note:"All four domains",
     brk:{web:"s≈2",os:"s≈4",db:"s≈5",em:"s=2"}
   },
   {
     name:"GPT-5-mini", org:"OpenAI", type:"prop",
-    web:36, os:42, db:38, em:null,
-    note:"Web, OS, Database",
-    brk:{web:"s≈2",os:"s≈4",db:"s≈5",em:null}
-  },
-  {
-    name:"GPT-5", org:"OpenAI", type:"prop",
-    web:null, os:null, db:null, em:60,
-    note:"Embodied only",
-    brk:{web:null,os:null,db:null,em:"s=2"}
+    web:36, os:42, db:38, em:33,
+    note:"All four domains",
+    brk:{web:"s≈2",os:"s≈4",db:"s≈5",em:"s=2"}
   }
 ];
 
@@ -967,7 +960,7 @@ function switchDomain(el,domain){
     web:'Web Navigation — success rate across extension levels s = 1..4.',
     os:'Operating System — success rate across extension levels s = 1..8.',
     db:'Database — Filter-k accuracy across extension levels s = 1..8.',
-    em:'Embodied Manipulation — success rate at extension levels s = 1 and s = 2.'
+    em:'Embodied Manipulation — success rate across extension levels s = 1..5.'
   };
   document.getElementById('table-desc').textContent=d[domain];
   renderTable();
