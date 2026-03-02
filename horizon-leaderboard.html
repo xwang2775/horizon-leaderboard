@@ -190,7 +190,7 @@ footer{background:var(--gray-900);color:white;padding:32px 0;border-top:1px soli
 <div class="top-banner">
   <!-- 📄 &nbsp;ICML 2026 Position Paper · Under Review &nbsp;·&nbsp; -->
   <a href="#paper">Read the Paper</a> &nbsp;·&nbsp;
-  <a href="#contribute">Submit Your Model</a>
+  <a href="#contribute">Contribute Tasks</a>
 </div>
 
 <nav>
@@ -240,10 +240,10 @@ footer{background:var(--gray-900);color:white;padding:32px 0;border-top:1px soli
     <div class="hero-actions">
       <a href="#contribute" class="hero-btn-primary">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
-        Submit Your Model
+        Contribute Tasks
       </a>
       <a href="#paper" class="hero-btn-ghost">📄 Paper</a>
-      <a href="https://github.com" target="_blank" class="hero-btn-ghost">⭐ GitHub</a>
+      <a href="https://huggingface.co/datasets/xwang2775/horizon-tasks" target="_blank" class="hero-btn-ghost">🤗 HuggingFace</a>
     </div>
 
     <div class="hero-stats">
@@ -605,7 +605,7 @@ h1 {
             <span class="item-icon">🔬</span> Failure Taxonomy
           </a>
           <a class="sidebar-item" href="#contribute">
-            <span class="item-icon">＋</span> Submit a Model
+            <span class="item-icon">＋</span> Contribute Tasks
           </a>
           <a class="sidebar-item" href="#paper">
             <span class="item-icon">📄</span> Paper &amp; Citation
@@ -733,55 +733,69 @@ h1 {
   <div class="page-wrap">
     <div class="section-hd reveal">
       <div class="section-label">Community</div>
-      <div class="section-title">Contribute to HORIZON</div>
-      <p class="section-desc">Evaluate your model and submit results to the leaderboard. All model families and research groups welcome.</p>
+      <div class="section-title">Contribute Tasks to HORIZON</div>
+      <p class="section-desc">Help grow the benchmark by contributing new long-horizon tasks. We collect structured tasks via HuggingFace Datasets — all domains and extension methods welcome.</p>
     </div>
     <div class="contrib-grid reveal">
       <div class="contrib-card dark">
-        <div class="contrib-step">Step 01 — Evaluate</div>
-        <div class="contrib-title">Run Your Agent on HORIZON</div>
-        <div class="contrib-desc">Clone the evaluation harness and run across all four domains. Baseline tasks are pre-verified solvable, so performance degradation reflects genuine horizon difficulty — not task ambiguity.</div>
-        <div class="code-block">git clone https://github.com/horizon-bench/horizon
-cd horizon && pip install -r requirements.txt
-
-# Evaluate across all domains
-python evaluate.py \
-  --agent your_agent \
-  --domains web os db embodied \
-  --output results.json</div>
+        <div class="contrib-step">Task Schema</div>
+        <div class="contrib-title">JSON Format</div>
+        <div class="contrib-desc">Each task follows a structured JSON schema. Provide at least two extension levels (s=1 and s=2) with corresponding instructions and oracle solutions.</div>
+        <div class="code-block">{
+  "task_id": "web_042",
+  "domain": "web",
+  "extension_method": "breadth",
+  "description": "Buy the cheapest red item, then post a review",
+  "H_star": 1,
+  "extension_levels": [
+    {
+      "s": 1,
+      "instruction": "...",
+      "oracle": "..."
+    },
+    {
+      "s": 2,
+      "instruction": "...",
+      "oracle": "..."
+    }
+  ],
+  "base_env": "webarena",
+  "contributor": "your_username",
+  "verified": false
+}</div>
+      </div>
+      <div class="contrib-card">
+        <div class="contrib-step">Step 01 — Design</div>
+        <div class="contrib-title">Create a Task</div>
+        <div class="contrib-desc">Choose a domain and extension method, then craft a baseline task and its horizon extensions following the HORIZON protocol.</div>
+        <ul class="contrib-list">
+          <li><strong>domain</strong>: one of <code>web</code>, <code>os</code>, <code>db</code>, <code>embodied</code></li>
+          <li><strong>extension_method</strong>: <code>breadth</code> (compose subtasks) or <code>depth</code> (add non-skippable steps)</li>
+          <li><strong>H_star</strong>: intrinsic horizon of the s=1 baseline task</li>
+          <li>Each extension level needs a full instruction and an oracle solution</li>
+        </ul>
       </div>
       <div class="contrib-card">
         <div class="contrib-step">Step 02 — Submit</div>
-        <div class="contrib-title">Open a Pull Request</div>
-        <div class="contrib-desc">Submit your <code>results.json</code> with per-task success rates and a model card. We validate and add you to the leaderboard.</div>
+        <div class="contrib-title">Upload to HuggingFace</div>
+        <div class="contrib-desc">Submit your task JSON to our HuggingFace dataset repository. Open a discussion or pull request with your contribution.</div>
         <ul class="contrib-list">
-          <li>Per-task success rates across all extension levels s</li>
-          <li>Model card: parameter count, context length, training details</li>
-          <li>Optionally annotate ≥20 failed trajectories with the 7-category taxonomy</li>
-          <li>Human or LLM-as-a-Judge annotations both accepted</li>
+          <li>Fork or open a discussion on the dataset repo</li>
+          <li>Upload your JSON file following the schema on the left</li>
+          <li>Include your username in the <code>contributor</code> field</li>
+          <li>Verified tasks are reviewed by the HORIZON team before inclusion</li>
         </ul>
-        <a href="https://github.com" target="_blank" class="btn btn-dark" style="margin-top:18px;display:inline-flex;font-size:12px;">Open a Pull Request →</a>
+        <a href="https://huggingface.co/datasets/xwang2775/horizon-tasks" target="_blank" class="btn btn-dark" style="margin-top:18px;display:inline-flex;font-size:12px;">Contribute on HuggingFace →</a>
       </div>
       <div class="contrib-card">
-        <div class="contrib-step">Step 03 — Extend the Benchmark</div>
-        <div class="contrib-title">Add New Tasks or Domains</div>
-        <div class="contrib-desc">HORIZON is designed to be extensible. Propose new baseline tasks or new domains following our horizon-extension protocol.</div>
+        <div class="contrib-step">Step 03 — Quality</div>
+        <div class="contrib-title">Task Guidelines</div>
+        <div class="contrib-desc">Good tasks have unambiguous oracle solutions and exhibit meaningful performance degradation across extension levels.</div>
         <ul class="contrib-list">
-          <li>New tasks require an oracle/expert solution to establish H*</li>
+          <li>Baseline (s=1) must be solvable by an optimal policy</li>
           <li>Depth extension: each added step must be non-skippable by an optimal policy</li>
           <li>Breadth extension: H*(s) must be additive across composed subtasks</li>
-          <li>All 7 taxonomy categories must be representable in the new domain</li>
-        </ul>
-      </div>
-      <div class="contrib-card">
-        <div class="contrib-step">Step 04 — Annotate Failures</div>
-        <div class="contrib-title">Contribute Failure Analysis</div>
-        <div class="contrib-desc">Failure attribution is as important as success rate. Annotate failed trajectories to build a richer diagnostic picture for the community.</div>
-        <ul class="contrib-list">
-          <li>Use the 7-category taxonomy — categories are non-exclusive</li>
-          <li>LLM-as-a-Judge pipeline provided for scalable annotation</li>
-          <li>Grounded in trajectory context for reproducible analysis</li>
-          <li>Enables targeted interventions beyond model scaling</li>
+          <li>Oracle solutions should be verifiable programmatically</li>
         </ul>
       </div>
     </div>
@@ -808,7 +822,7 @@ python evaluate.py \
         </p>
         <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
           <a href="https://arxiv.org" target="_blank" class="btn btn-dark" style="font-size:12px;">📄 arXiv Preprint</a>
-          <a href="https://github.com" target="_blank" class="btn btn-outline" style="font-size:12px;">GitHub ↗</a>
+          <a href="https://huggingface.co/datasets/xwang2775/horizon-tasks" target="_blank" class="btn btn-outline" style="font-size:12px;">🤗 HuggingFace Dataset ↗</a>
         </div>
       </div>
       <div class="contrib-card">
@@ -838,7 +852,7 @@ python evaluate.py \
       </div>
       <ul class="footer-links">
         <li><a href="#paper">Paper</a></li>
-        <li><a href="https://github.com">GitHub</a></li>
+        <li><a href="https://huggingface.co/datasets/xwang2775/horizon-tasks" target="_blank">HuggingFace</a></li>
         <li><a href="#contribute">Contribute</a></li>
       </ul>
     </div>
@@ -847,7 +861,7 @@ python evaluate.py \
 
 <script>
 // Models from the paper only
-// GPT-5-mini: Web/OS/DB; GPT-5: Embodied; Claude-4-Sonnet: all four
+// GPT-5-mini and Claude-4-Sonnet: all four domains
 const MODELS = [
   {
     name:"Claude-4-Sonnet", org:"Anthropic", type:"prop",
