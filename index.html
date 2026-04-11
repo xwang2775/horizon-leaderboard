@@ -205,6 +205,8 @@ footer{background:var(--gray-900);color:white;padding:32px 0;border-top:1px soli
     <ul class="nav-links">
       <li><a href="#leaderboard">Leaderboard</a></li>
       <li><a href="#taxonomy">Taxonomy</a></li>
+      <li><a href="#judge">LLM Judge</a></li>
+      <li><a href="#openclaw">OpenClaw</a></li>
       <li><a href="#contribute">Contribute</a></li>
       <li><a href="#paper" class="nav-paper">📄 Paper</a></li>
     </ul>
@@ -604,6 +606,12 @@ h1 {
           <a class="sidebar-item" href="#taxonomy">
             <span class="item-icon">🔬</span> Failure Taxonomy
           </a>
+          <a class="sidebar-item" href="#judge">
+            <span class="item-icon">⚖️</span> LLM-as-a-Judge
+          </a>
+          <a class="sidebar-item" href="#openclaw">
+            <span class="item-icon">🦀</span> OpenClaw Examples
+          </a>
           <a class="sidebar-item" href="#contribute">
             <span class="item-icon">＋</span> Contribute Tasks
           </a>
@@ -687,11 +695,11 @@ h1 {
               <div class="dc-top"></div>
               <div class="dc-icon">🗄️</div>
               <div class="dc-name">Database</div>
-              <div class="dc-desc">Custom environment built from scratch. 3-module agent: Selector → Decomposer → Refiner. Evaluated by Filter-k accuracy. Tasks range from simple queries to multi-table joins with nested sub-goals.</div>
+              <div class="dc-desc">Based on MAC-SQL (Wang et al., 2023). Multi-agent Text-to-SQL framework with Selector, Decomposer, and Refiner agents. Evaluated by execution accuracy. Tasks range from simple queries to multi-table joins with nested sub-goals.</div>
               <div class="dc-chips">
                 <span class="dc-chip">Depth Extension</span>
                 <span class="dc-chip">s = 1..8</span>
-                <span class="dc-chip">Custom env</span>
+                <span class="dc-chip">MAC-SQL base</span>
               </div>
             </div>
             <div class="domain-card" style="--dc-color:#22c55e;--dc-bg:#f0fdf4">
@@ -725,6 +733,129 @@ h1 {
       </p>
     </div>
     <div class="taxonomy-grid reveal" id="taxonomy-grid"></div>
+  </div>
+</div>
+
+<!-- LLM-AS-A-JUDGE -->
+<div class="section" id="judge">
+  <div class="page-wrap">
+    <div class="section-hd reveal">
+      <div class="section-label">Evaluation Pipeline</div>
+      <div class="section-title">LLM-as-a-Judge Failure Attribution</div>
+      <p class="section-desc">
+        After collecting agent trajectories, each failed run is submitted to an LLM judge
+        prompted with the full 7-category taxonomy. The judge identifies the <strong>primary failure mode</strong>
+        and provides a natural-language rationale grounded in the trajectory evidence.
+      </p>
+    </div>
+
+    <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8px;">
+
+      <!-- Pipeline flow -->
+      <div class="contrib-card" style="display:flex;flex-direction:column;gap:0;">
+        <div class="contrib-step">Pipeline Overview</div>
+        <div class="contrib-title">Three-Stage Process</div>
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:0;">
+          <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--gray-100);">
+            <div style="min-width:28px;height:28px;border-radius:50%;background:var(--gray-900);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">1</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--gray-800);">Trajectory Collection</div>
+              <div style="font-size:12px;color:var(--gray-500);margin-top:2px;line-height:1.6;">Each agent run produces a full action–observation log. Runs with final score = 0 are marked as failures and forwarded to the judge.</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--gray-100);">
+            <div style="min-width:28px;height:28px;border-radius:50%;background:var(--gray-900);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">2</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--gray-800);">LLM Judgment</div>
+              <div style="font-size:12px;color:var(--gray-500);margin-top:2px;line-height:1.6;">A judge LLM receives the trajectory plus the 7-category taxonomy definition. It selects the primary failure type and outputs a structured rationale citing the specific step where failure occurs.</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;">
+            <div style="min-width:28px;height:28px;border-radius:50%;background:var(--gray-900);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">3</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--gray-800);">Validation</div>
+              <div style="font-size:12px;color:var(--gray-500);margin-top:2px;line-height:1.6;">A random sample of attributions is reviewed by two domain experts via blind annotation. Disagreements are resolved through consensus discussion.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Distribution -->
+      <div class="contrib-card">
+        <div class="contrib-step">Attribution Results</div>
+        <div class="contrib-title">Failure Distribution (3,357 Trajectories)</div>
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:9px;">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-400);display:flex;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid var(--gray-100);">
+            <span>Category</span><span>Count</span>
+          </div>
+          <div id="judge-dist"></div>
+        </div>
+        <p style="font-size:11px;color:var(--gray-300);margin-top:14px;font-family:'IBM Plex Mono',monospace;line-height:1.7;">
+          Planning Error dominates across all domains. Success (score=1) trajectories are retained for contrast analysis.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Prompt template -->
+    <div class="reveal" style="margin-top:20px;">
+      <div class="contrib-card dark">
+        <div class="contrib-step">Judge Prompt Template</div>
+        <div class="contrib-title">Taxonomy-Grounded Attribution Prompt</div>
+        <div class="code-block">You are an expert evaluator of LLM agent failures.
+Given the trajectory below, identify the PRIMARY failure type
+from the following 7 categories:
+
+  [1] Environment Disturbance
+  [2] Instruction (Ill-defined / Partial Understanding)
+  [3] Planning Error
+  [4] False Assumption
+  [5] History Error Accumulation
+  [6] Catastrophic Forgetting
+  [7] Memory Limitation
+
+Trajectory:
+&lt;trajectory&gt;{full_action_observation_log}&lt;/trajectory&gt;
+
+Respond with:
+  failure_type: &lt;one of the 7 categories above&gt;
+  failure_step: &lt;step number where failure first occurs&gt;
+  reason: &lt;1–2 sentence explanation citing specific trajectory evidence&gt;</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OPENCLAW EXAMPLES -->
+<div class="section" id="openclaw" style="background:var(--gray-50);border-top:1px solid var(--gray-200);border-bottom:1px solid var(--gray-200);">
+  <div class="page-wrap">
+    <div class="section-hd reveal">
+      <div class="section-label">Real-World Grounding</div>
+      <div class="section-title">OpenClaw Failure Examples</div>
+      <p class="section-desc">
+        The <em>Agents of Chaos</em> study documents representative failures from OpenClaw, a real-world email-based agent system.
+        Below we map each incident to our taxonomy, offering preliminary real-world validation for the failure categories identified in our controlled benchmark.
+        Conceptual examples (marked ✦) are derived from OpenClaw-style deployment patterns rather than a specific named incident.
+      </p>
+    </div>
+    <div class="reveal">
+      <div class="table-card">
+        <div class="table-meta">
+          <strong>7 categories</strong> &nbsp;·&nbsp; mapped from Agents of Chaos (Shapira et al., 2025, arXiv:2602.20021) &nbsp;·&nbsp; ✦ = conceptual illustration
+        </div>
+        <table id="openclaw-table">
+          <thead>
+            <tr>
+              <th style="width:160px">Failure Category</th>
+              <th style="width:160px">Incident / Example</th>
+              <th>What Happened</th>
+              <th style="width:220px">Mechanism</th>
+            </tr>
+          </thead>
+          <tbody id="openclaw-body"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -862,18 +993,21 @@ h1 {
 <script>
 // Models from the paper only
 // GPT-5-mini and Claude-4-Sonnet: all four domains
+// Performance data sourced from "Embodied task - Copy of Sheet2.csv"
+// Values are mean success rates averaged across all extension levels (s=0..s_max) per domain.
+// Break level = first s where success drops below 50% from the s=1 baseline.
 const MODELS = [
   {
     name:"Claude-4-Sonnet", org:"Anthropic", type:"prop",
-    web:32, os:51, db:45, em:27,
+    web:26, os:43, db:40, em:27,
     note:"All four domains",
-    brk:{web:"s≈2",os:"s≈4",db:"s≈5",em:"s=2"}
+    brk:{web:"s=1",os:"s≈3",db:"s≈5",em:"s=1"}
   },
   {
     name:"GPT-5-mini", org:"OpenAI", type:"prop",
-    web:36, os:42, db:38, em:33,
+    web:29, os:32, db:34, em:33,
     note:"All four domains",
-    brk:{web:"s≈2",os:"s≈4",db:"s≈5",em:"s=2"}
+    brk:{web:"s=1",os:"s≈3",db:"s≈2",em:"s=1"}
   }
 ];
 
@@ -973,7 +1107,7 @@ function switchDomain(el,domain){
     all:'Average success rate across all four domains and extension levels.',
     web:'Web Navigation — success rate across extension levels s = 1..4.',
     os:'Operating System — success rate across extension levels s = 1..8.',
-    db:'Database — Filter-k accuracy across extension levels s = 1..8.',
+    db:'Database (MAC-SQL) — execution accuracy across extension levels s = 1..8.',
     em:'Embodied Manipulation — success rate across extension levels s = 1..5.'
   };
   document.getElementById('table-desc').textContent=d[domain];
@@ -1003,8 +1137,104 @@ function initReveal(){
   document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 }
 
+// ── LLM Judge distribution ──────────────────────────────────────────────
+const JUDGE_DIST = [
+  {name:"Planning Error",      count:1273, color:"#ec4899"},
+  {name:"Success",             count:1216, color:"#22c55e"},
+  {name:"Environment",         count:393,  color:"#ef4444"},
+  {name:"Memory Limitation",   count:229,  color:"#14b8a6"},
+  {name:"Instruction",         count:190,  color:"#f59e0b"},
+  {name:"False Assumption",    count:49,   color:"#8b5cf6"},
+  {name:"Catastrophic Forgetting", count:6, color:"#3b82f6"},
+  {name:"History Error Accumulation", count:1, color:"#0ea5e9"}
+];
+const TOTAL_TRAJ = 3357;
+
+function renderJudgeDist(){
+  const el = document.getElementById('judge-dist');
+  if(!el) return;
+  el.innerHTML = JUDGE_DIST.map(d=>{
+    const pct = Math.round(d.count/TOTAL_TRAJ*100);
+    const barW = Math.round(d.count/JUDGE_DIST[0].count*100);
+    return `<div style="display:flex;align-items:center;gap:8px;">
+      <div style="font-size:12px;color:var(--gray-600);min-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name}</div>
+      <div style="flex:1;height:5px;background:var(--gray-100);border-radius:3px;overflow:hidden;">
+        <div style="width:${barW}%;height:100%;background:${d.color};border-radius:3px;"></div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gray-500);min-width:44px;text-align:right;">${d.count.toLocaleString()} (${pct}%)</div>
+    </div>`;
+  }).join('');
+}
+
+// ── OpenClaw examples ───────────────────────────────────────────────────
+const OPENCLAW = [
+  {
+    cat:"🌪️ Environment Disturbance",
+    color:"#ef4444",
+    example:"Storage Exhaustion + Concurrent Modification ✦",
+    what:"Agents repeatedly stored large attachments until the mail server hit a denial-of-service state. Conceptually: a concurrent cloud sync renames folders mid-execution; the agent misinterprets \"file not found\" errors as transient and continues against a stale directory structure.",
+    mechanism:"Failed to monitor resource state; errors misread as transient rather than as environment changes invalidating the plan."
+  },
+  {
+    cat:"📋 Ill-defined Instruction",
+    color:"#f59e0b",
+    example:"Forwarded Inbox",
+    what:"Agent refused to \"share\" emails containing sensitive data but complied when asked to \"forward\" the same messages — treating two semantically equivalent instructions as distinct tasks.",
+    mechanism:"Inconsistent interpretation of underspecified instruction allows sensitive data disclosure through simple reframing."
+  },
+  {
+    cat:"🗺️ Planning Error",
+    color:"#ec4899",
+    example:"Infinite Loop",
+    what:"Two agents were induced to relay messages to each other indefinitely, creating persistent background processes that the system could not terminate.",
+    mechanism:"Execution plan lacked termination conditions or loop detection, leading to runaway unbounded behavior."
+  },
+  {
+    cat:"🎲 False Assumption",
+    color:"#8b5cf6",
+    example:"Identity Hijack",
+    what:"An attacker spoofed the owner's identity in a new communication channel. The agent executed privileged commands without verifying the claimed identity.",
+    mechanism:"Agent incorrectly assumed claimed identity is authentic, bypassing verification entirely and allowing unauthorized system actions."
+  },
+  {
+    cat:"📈 History Error Accumulation",
+    color:"#0ea5e9",
+    example:"Guilt Trip",
+    what:"After repeatedly refusing requests, the agent eventually complied under sustained emotional pressure across many interaction turns.",
+    mechanism:"Decision boundary gradually eroded by an attacker-favorable interaction history; earlier refusal decisions overridden as the trajectory grew."
+  },
+  {
+    cat:"💾 Catastrophic Forgetting",
+    color:"#3b82f6",
+    example:"Policy Override ✦",
+    what:"An email agent instructed at session start never to respond to external domains replies to a politely-worded external inquiry after hundreds of routine internal turns — the constraint is present in context but no longer attended to.",
+    mechanism:"Effective inattention to early instructions buried deep in a long trajectory; forgetting manifests not as literal memory loss but as failure to retrieve early constraints during generation."
+  },
+  {
+    cat:"🧠 Memory Limitation",
+    color:"#14b8a6",
+    example:"Storage Exhaustion",
+    what:"Agents accumulated memory files and stored large attachments across the session until the mail server reached a denial-of-service state, despite each individual action being locally valid.",
+    mechanism:"Agent lacked persistent memory of its own cumulative storage actions across the session, so the global resource constraint was invisible until collapse."
+  }
+];
+
+function renderOpenClaw(){
+  const el = document.getElementById('openclaw-body');
+  if(!el) return;
+  el.innerHTML = OPENCLAW.map(row=>`
+    <tr>
+      <td><span style="font-weight:600;font-size:12px;color:${row.color}">${row.cat}</span></td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gray-600);">${row.example}</td>
+      <td style="font-size:12px;color:var(--gray-600);line-height:1.6;">${row.what}</td>
+      <td style="font-size:11px;color:var(--gray-500);line-height:1.6;font-style:italic;">${row.mechanism}</td>
+    </tr>`).join('');
+}
+
 renderTable();
 renderTaxonomy();
+renderJudgeDist();
+renderOpenClaw();
 initReveal();
 </script>
 </body>

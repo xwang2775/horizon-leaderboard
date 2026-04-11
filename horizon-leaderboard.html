@@ -687,11 +687,11 @@ h1 {
               <div class="dc-top"></div>
               <div class="dc-icon">🗄️</div>
               <div class="dc-name">Database</div>
-              <div class="dc-desc">Custom environment built from scratch. 3-module agent: Selector → Decomposer → Refiner. Evaluated by Filter-k accuracy. Tasks range from simple queries to multi-table joins with nested sub-goals.</div>
+              <div class="dc-desc">Based on MAC-SQL (Wang et al., 2023). Multi-agent Text-to-SQL framework with Selector, Decomposer, and Refiner agents. Evaluated by execution accuracy. Tasks range from simple queries to multi-table joins with nested sub-goals.</div>
               <div class="dc-chips">
                 <span class="dc-chip">Depth Extension</span>
                 <span class="dc-chip">s = 1..8</span>
-                <span class="dc-chip">Custom env</span>
+                <span class="dc-chip">MAC-SQL base</span>
               </div>
             </div>
             <div class="domain-card" style="--dc-color:#22c55e;--dc-bg:#f0fdf4">
@@ -973,7 +973,7 @@ function switchDomain(el,domain){
     all:'Average success rate across all four domains and extension levels.',
     web:'Web Navigation — success rate across extension levels s = 1..4.',
     os:'Operating System — success rate across extension levels s = 1..8.',
-    db:'Database — Filter-k accuracy across extension levels s = 1..8.',
+    db:'Database (MAC-SQL) — execution accuracy across extension levels s = 1..8.',
     em:'Embodied Manipulation — success rate across extension levels s = 1..5.'
   };
   document.getElementById('table-desc').textContent=d[domain];
